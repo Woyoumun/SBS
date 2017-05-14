@@ -14,10 +14,10 @@ public class EmployeeResource {
 	@Produces("application/json")
 	public List<Employee>  getEmployee(@PathParam("lastname") String lastName) {
 		MongoEmployeeAccess access = new MongoEmployeeAccess();
-		System.out.println("LastName" + lastName);
 		List<Employee> elist = access.getEmployeesByLastName(lastName);
-		
+		for (Employee e : elist) {
+			System.out.println(" the position is " + e.getPostion());
+		}
 		return elist;
 	}
-
 }

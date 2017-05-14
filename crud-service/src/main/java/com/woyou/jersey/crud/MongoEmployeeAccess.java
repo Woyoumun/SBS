@@ -7,13 +7,12 @@ import java.util.List;
 
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.junit.After;
-
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.result.DeleteResult;
+import com.woyou.jersey.crud.utils.Constants;
 
 public class MongoEmployeeAccess {
 	private static String dbName = "test";
@@ -27,31 +26,40 @@ public class MongoEmployeeAccess {
 	}
 	
 	public static Document mapping(Employee e, Object id) {
-		Document doc = new Document("firstName",e.getFirstName())
-				.append("lastName", e.getLastName())
-				.append("middleInit", e.getMiddleInit())
-				.append("active", e.getActive())
-				.append("address1", e.getAddress1())
-				.append("address2", e.getAddress2())
-				.append("city", e.getCity())
-				.append("state", e.getState())
-				.append("zip", e.getZip())
-				.append("phoneNumber", e.getPhoneNumber());
+		Document doc = new Document(Constants.firstName,e.getFirstName())
+				.append(Constants.lastName, e.getLastName())
+				.append(Constants.middleInit, e.getMiddleInit())
+				.append(Constants.active, e.getActive())
+				.append(Constants.address1, e.getAddress1())
+				.append(Constants.address2, e.getAddress2())
+				.append(Constants.city, e.getCity())
+				.append(Constants.state, e.getState())
+				.append(Constants.zip, e.getZip())
+				.append(Constants.dateHired, e.getDateHired())
+				.append(Constants.position, e.getPostion())
+				.append(Constants.phoneNumber, e.getPhoneNumber());
+				
 		if (id != null) 
-			doc.append("_id", id);
+			doc.append(Constants.id, id);
 		return doc;
 	}
 	public static Employee getEmployeeFromDoc(Document doc) {
 		Employee e = new Employee();
-		e.setFirstName(doc.getString("firstName"));
-		e.setLastName(doc.getString("lastName"));
-		e.setActive(doc.getBoolean("active"));
-		e.setAddress1(doc.getString("address1"));
-		e.setAddress2(doc.getString("address2"));
-		e.setCity(doc.getString("city"));
-		e.setState(doc.getString("state"));
-		e.setPhoneNumber(doc.getString("phoneNumber"));
-		e.setId(doc.get("_id"));
+		e.setFirstName(doc.getString(Constants.firstName));
+		e.setLastName(doc.getString(Constants.lastName));
+		e.setMiddleInit(doc.getString(Constants.middleInit));
+		e.setActive(doc.getBoolean(Constants.active));
+		e.setAddress1(doc.getString(Constants.address1));
+		e.setAddress2(doc.getString(Constants.address2));
+		e.setCity(doc.getString(Constants.city));
+		e.setState(doc.getString(Constants.state));
+		e.setZip(doc.getString(Constants.zip));
+		e.setPhoneNumber(doc.getString(Constants.phoneNumber));
+		e.setDateHired(doc.getDate(Constants.dateHired));
+//		System.out.println("position in doc " + doc.getString(Constants.position));
+		e.setPosition(doc.getString(Constants.position));
+//		System.out.println("position in e " + e.getPostion());
+		e.setId(doc.get(Constants.id));
 		return e;
 	}
 	
@@ -60,13 +68,13 @@ public class MongoEmployeeAccess {
 		Document doc = mapping(e, null);	
 		MongoCollection<Document> coll = database.getCollection(collectionName);
 		coll.insertOne(doc);
-		e.setId(doc.get("_id"));
-		return doc.get("_id");
+		e.setId(doc.get(Constants.id));
+		return doc.get(Constants.id);
 	}
 	
 	public Employee getOneEmployee(String firstName, String lastName) {
 		MongoCollection<Document> coll = database.getCollection(collectionName);
-		Bson filter = and(eq("firstName",firstName),eq("lastName",lastName));
+		Bson filter = and(eq(Constants.firstName,firstName),eq(Constants.lastName,lastName));
 		ArrayList<Document> inter = coll.find(filter)
 				.into(new ArrayList<Document>());
 		if (inter == null || inter.isEmpty())
@@ -76,7 +84,7 @@ public class MongoEmployeeAccess {
 	}
 	
 	public Employee getEmployeeById(Object id) {
-		Bson filter = eq("_id",id);
+		Bson filter = eq(Constants.id,id);
 		MongoCollection<Document> coll = database.getCollection(collectionName);
 		Document doc = coll.find(filter).first();
 		if (doc == null)
@@ -86,7 +94,7 @@ public class MongoEmployeeAccess {
 	
 	public Employee updateOneEmployee( Employee e) {
 		MongoCollection<Document> coll = database.getCollection(collectionName);
-		Bson filter = eq("_id",e.getId());
+		Bson filter = eq(Constants.id,e.getId());
 		Document doc = mapping(e, e.getId());
 		
 		return getEmployeeFromDoc(coll.findOneAndReplace(filter, doc));
@@ -94,14 +102,24 @@ public class MongoEmployeeAccess {
 	
 	public long delete(Employee e) {
 		MongoCollection<Document> coll = database.getCollection(collectionName);
-		Bson filter = Filters.eq("_id",e.getId());
+		Bson filter = Filters.eq(Constants.id,e.getId());
 		DeleteResult result = coll.deleteOne(filter);
 		return result.getDeletedCount();
 	}
 	
 	public List<Employee> getEmployeesByLastName(String lastName) {
 		MongoCollection<Document> coll = database.getCollection(collectionName);
-		List<Document> dl = coll.find(eq("lastName",lastName)).into(new ArrayList<Document>());
+		List<Document> dl = coll.find(eq(Constants.lastName,lastName)).into(new ArrayList<Document>());
+		ArrayList<Employee> elist = new ArrayList<Employee>();
+		for (Document d : dl) {
+			elist.add(getEmployeeFromDoc(d));
+		}
+		return elist;
+	}
+	
+	public ArrayList<Employee> getAllEmployees() {
+		MongoCollection<Document> coll = database.getCollection(collectionName);
+		List<Document> dl = coll.find().into(new ArrayList<Document>());
 		ArrayList<Employee> elist = new ArrayList<Employee>();
 		for (Document d : dl) {
 			elist.add(getEmployeeFromDoc(d));
