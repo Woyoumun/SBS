@@ -7,6 +7,9 @@ import java.util.List;
 
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.bson.types.ObjectId;
+
+import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -125,6 +128,13 @@ public class MongoEmployeeAccess {
 			elist.add(getEmployeeFromDoc(d));
 		}
 		return elist;
+	}
+	public Employee findById(String id) {
+		BasicDBObject query = new BasicDBObject("_id",new ObjectId(id));
+		Document empDoc = database.getCollection(collectionName).find(query).first();
+		if (empDoc == null)
+			return null;
+		return MongoEmployeeAccess.getEmployeeFromDoc(empDoc);
 	}
 	public void shutdown() {
 		mgClient.close();
